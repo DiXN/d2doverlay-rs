@@ -1,0 +1,8 @@
+[package]
+name = "d2doverlay"
+version = "0.1.0"
+authors = ["Michael Kaltschmid <kaltschmidmichael@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+d2doverlay-sys = { path = "../d2doverlay-sys" }
