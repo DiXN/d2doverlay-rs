@@ -1,9 +1,5 @@
-use std::env;
-
 fn main() {
   let mut build = cc::Build::new();
-
-  let target = env::var("TARGET").unwrap();
 
   build
     .include("overlay.h")
