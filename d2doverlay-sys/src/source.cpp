@@ -39,12 +39,12 @@ DirectOverlayCallback drawLoopCallback = NULL;
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-void draw_string(const char* str, float fontSize, float x, float y, float r, float g, float b, float a) {
+void draw_string_sys(const char* str, float fontSize, float x, float y, float r, float g, float b, float a) {
 	std::string cpp_str(str);
-	return draw_string(cpp_str, fontSize, x, y, r, g, b, a);
+	return draw_string_sys(cpp_str, fontSize, x, y, r, g, b, a);
 }
 
-void draw_string(std::string str, float fontSize, float x, float y, float r, float g, float b, float a) {
+void draw_string_sys(std::string str, float fontSize, float x, float y, float r, float g, float b, float a) {
 	RECT re;
 	GetClientRect(overlayWindow, &re);
 	FLOAT dpix, dpiy;
@@ -62,7 +62,7 @@ void draw_string(std::string str, float fontSize, float x, float y, float r, flo
 	}
 }
 
-void draw_box(float x, float y, float width, float height, float thickness, float r, float g, float b, float a, bool filled) {
+void draw_box_sys(float x, float y, float width, float height, float thickness, float r, float g, float b, float a, bool filled) {
 	solid_brush->SetColor(D2D1::ColorF(r, g, b, a));
 
 	if (filled)
@@ -71,12 +71,12 @@ void draw_box(float x, float y, float width, float height, float thickness, floa
 	else target->DrawRectangle(D2D1::RectF(x, y, x + width, y +height), solid_brush, thickness);
 }
 
-void draw_line(float x1, float y1, float x2, float y2, float thickness, float r, float g, float b, float a) {
+void draw_line_sys(float x1, float y1, float x2, float y2, float thickness, float r, float g, float b, float a) {
 	solid_brush->SetColor(D2D1::ColorF(r, g, b, a));
 	target->DrawLine(D2D1::Point2F(x1, y1), D2D1::Point2F(x2, y2), solid_brush, thickness);
 }
 
-void draw_circle(float x, float y, float radius, float thickness, float r, float g, float b, float a, bool filled) {
+void draw_circle_sys(float x, float y, float radius, float thickness, float r, float g, float b, float a, bool filled) {
 	solid_brush->SetColor(D2D1::ColorF(r, g, b, a));
 
 	if (filled)
@@ -85,7 +85,7 @@ void draw_circle(float x, float y, float radius, float thickness, float r, float
 	else target->DrawEllipse(D2D1::Ellipse(D2D1::Point2F(x, y), radius, radius), solid_brush, thickness);
 }
 
-void draw_ellipse(float x, float y, float width, float height, float thickness, float r, float g, float b, float a, bool filled) {
+void draw_ellipse_sys(float x, float y, float width, float height, float thickness, float r, float g, float b, float a, bool filled) {
 	solid_brush->SetColor(D2D1::ColorF(r, g, b, a));
 
 	if (filled)
@@ -172,7 +172,7 @@ void mainLoop() {
 					fps = 1000 / (float)frameTime;
 					showTime = postTime;
 				}
-				draw_string(std::to_string(fps), 20, siz.width - 50, 0, 0, 1, 0);
+				draw_string_sys(std::to_string(fps), 20, siz.width - 50, 0, 0, 1, 0);
 			}
 
 			if (o_VSync) {
@@ -268,23 +268,23 @@ DWORD WINAPI OverlayThread(LPVOID lpParam) {
 	}
 }
 
-void overlay_setup(DirectOverlayCallback callback) {
+void overlay_setup_sys(DirectOverlayCallback callback) {
 	drawLoopCallback = callback;
 	CreateThread(0, 0, OverlayThread, NULL, 0, NULL);
 }
 
-void overlay_setup_with_window(DirectOverlayCallback callback, HWND _targetWindow) {
+void overlay_setup_with_window_sys(DirectOverlayCallback callback, HWND _targetWindow) {
 	drawLoopCallback = callback;
 	CreateThread(0, 0, OverlayThread, _targetWindow, 0, NULL);
 }
 
-void overlay_setup_with_process(DirectOverlayCallback callback, const char* _process) {
+void overlay_setup_with_process_sys(DirectOverlayCallback callback, const char* _process) {
 	drawLoopCallback = callback;
 	EnumWindows(EnumWindowsProcPid, PidFromProcessName(std::string(_process)));
 	CreateThread(0, 0, OverlayThread, enumWindow, 0, NULL);
 }
 
-void overlay_options(DWORD option) {
+void overlay_options_sys(DWORD option) {
 	if (option & D2DOV_REQUIRE_FOREGROUND) o_Foreground = true;
 	if (option & D2DOV_DRAW_FPS) o_DrawFPS = true;
 	if (option & D2DOV_VSYNC) o_VSync = true;

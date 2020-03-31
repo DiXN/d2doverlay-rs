@@ -64,37 +64,37 @@
 #define D2DOV_FONT_IMPACT			(1 << 7)
 
 // The function you call to set up the above options.  Make sure its called before the DirectOverlaySetup function
-OVERLAY_API void overlay_options(DWORD option);
+OVERLAY_API void overlay_options_sys(DWORD option);
 
 // typedef for the callback function, where you'll do the drawing.
 typedef void(*DirectOverlayCallback)(int width, int height);
 
 // Initializes a the overlay window, and the thread to run it.  Input your callback function.
 // Uses the first window in the current process to target.  If you're external, use the next function
-OVERLAY_API void overlay_setup(DirectOverlayCallback callback);
+OVERLAY_API void overlay_setup_sys(DirectOverlayCallback callback);
 
 // Used to specify the window manually, to be used with externals.
-OVERLAY_API void overlay_setup_with_window(DirectOverlayCallback callback, HWND window);
+OVERLAY_API void overlay_setup_with_window_sys(DirectOverlayCallback callback, HWND window);
 
-OVERLAY_API void overlay_setup_with_process(DirectOverlayCallback callback, const char* process);
+OVERLAY_API void overlay_setup_with_process_sys(DirectOverlayCallback callback, const char* process);
 
 // Draws a line from (x1, y1) to (x2, y2), with a specified thickness.
 // Specify the color, and optionally an alpha for the line.
-OVERLAY_API void draw_line(float x1, float y1, float x2, float y2, float thickness, float r, float g, float b, float a = 1);
+OVERLAY_API void draw_line_sys(float x1, float y1, float x2, float y2, float thickness, float r, float g, float b, float a = 1);
 
 // Draws a rectangle on the screen.  Width and height are relative to the coordinates of the box.
 // Use the "filled" bool to make it a solid rectangle; ignore the thickness.
 // To just draw the border around the rectangle, specify a thickness and pass "filled" as false.
-OVERLAY_API void draw_box(float x, float y, float width, float height, float thickness, float r, float g, float b, float a, bool filled);
+OVERLAY_API void draw_box_sys(float x, float y, float width, float height, float thickness, float r, float g, float b, float a, bool filled);
 
 // Draws a circle.  As with the DrawBox, the "filled" bool will make it a solid circle, and thickness is only used when filled=false.
-OVERLAY_API void draw_circle(float x, float y, float radius, float thickness, float r, float g, float b, float a, bool filled);
+OVERLAY_API void draw_circle_sys(float x, float y, float radius, float thickness, float r, float g, float b, float a, bool filled);
 
 // Allows you to draw an elipse.  Same as a circle, except you have two different radii, for width and height.
-OVERLAY_API void draw_ellipse(float x, float y, float width, float height, float thickness, float r, float g, float b, float a, bool filled);
+OVERLAY_API void draw_ellipse_sys(float x, float y, float width, float height, float thickness, float r, float g, float b, float a, bool filled);
 
 // Draw a string on the screen.  Input is in the form of an std::string.
-void draw_string(std::string str, float fontSize, float x, float y, float r, float g, float b, float a = 1);
-OVERLAY_API void draw_string(const char* str, float fontSize, float x, float y, float r, float g, float b, float a = 1);
+void draw_string_sys(std::string str, float fontSize, float x, float y, float r, float g, float b, float a = 1);
+OVERLAY_API void draw_string_sys(const char* str, float fontSize, float x, float y, float r, float g, float b, float a = 1);
 
 #endif // OVERLAY_H
