@@ -1,4 +1,4 @@
-use d2doverlay_sys::{overlay_setup_with_process, overlay_options, draw_ellipse, draw_circle, draw_box, draw_line, draw_string};
+use d2doverlay_sys::{overlay_setup_with_process_sys, overlay_options_sys, draw_ellipse_sys, draw_circle_sys, draw_box_sys, draw_line_sys, draw_string_sys};
 
 use std::ffi::CString;
 use std::sync::mpsc::{Sender, Receiver, channel};
@@ -7,27 +7,22 @@ use std::sync::Mutex;
 
 #[derive(Debug)]
 enum Draw {
-  Box(f32, f32, f32, f32),
-  Line(f32, f32, f32, f32),
-  Ellipse(f32, f32, f32, f32),
-  Circle(f32, f32, f32),
-  Text(String, f32, f32, f32)
+  Box(f32, f32, f32, f32, f32, f32, f32, f32, f32, bool),
+  Line(f32, f32, f32, f32, f32, f32, f32, f32, f32),
+  Ellipse(f32, f32, f32, f32, f32, f32, f32, f32, f32, bool),
+  Circle(f32, f32, f32, f32, f32, f32, f32, f32, bool),
+  Text(String, f32, f32, f32, f32, f32, f32, f32)
 }
 
-#[derive(Clone)]
-pub struct D2dOverlay {
-  thickness: f32,
-  r: f32,
-  g: f32,
-  b: f32,
-  a: f32,
-  filled : bool,
-  process: Option<String>,
-  window: Option<u32>
-}
+const THICKNESS: f32 = 1.0;
+const R: f32 = 0.0;
+const G: f32 = 0.0;
+const B: f32 = 0.0;
+const A: f32 = 1.0;
+const FILLED: bool = false;
 
 lazy_static! {
-  static ref CHANNEL: (Mutex<Sender<(D2dOverlay, Draw)>>,  Mutex<Receiver<(D2dOverlay, Draw)>>) = {
+  static ref CHANNEL: (Mutex<Sender<Draw>>,  Mutex<Receiver<Draw>>) = {
     let (tx, rx) = channel();
     (Mutex::new(tx), Mutex::new(rx))
   };
@@ -35,86 +30,118 @@ lazy_static! {
 
 extern "C" fn draw_loop(_: u32, _: u32) {
   let rx = &CHANNEL.1;
-  while let Ok((d2d, draw)) = (*rx.lock().unwrap()).recv() {
+
+  while let Ok(draw) = (*rx.lock().unwrap()).recv() {
     match draw {
-      Draw::Ellipse(x, y, width, height) => unsafe { draw_ellipse(x, y, width, height, d2d.thickness, d2d.r, d2d.g, d2d.b, d2d.a, d2d.filled) },
-      Draw::Box(x, y, width, height) => unsafe { draw_box(x, y, width, height, d2d.thickness, d2d.r, d2d.g, d2d.b, d2d.a, d2d.filled) },
-      Draw::Circle(x, y, radius) => unsafe { draw_circle(x, y, radius, d2d.thickness, d2d.r, d2d.g, d2d.b, d2d.a, d2d.filled) },
-      Draw::Line(x1, y1, x2, y2) => unsafe { draw_line(x1, y1, x2, y2, d2d.thickness, d2d.r, d2d.g, d2d.b, d2d.a) },
-      Draw::Text(text, font_size, x, y) => unsafe { draw_string(CString::new(text.to_owned()).unwrap().as_ptr(), font_size, x, y, d2d.r, d2d.g, d2d.b, d2d.a) },
+      Draw::Ellipse(x, y, width, height, thickness, r, g, b, a, filled) => unsafe { draw_ellipse_sys(x, y, width, height, thickness, r, g, b, a, filled) },
+      Draw::Box(x, y, width, height, thickness, r, g, b, a, filled) => unsafe { draw_box_sys(x, y, width, height, thickness, r, g, b, a, filled) },
+      Draw::Circle(x, y, radius, thickness, r, g, b, a, filled) => unsafe { draw_circle_sys(x, y, radius, thickness, r, g, b, a, filled) },
+      Draw::Line(x1, y1, x2, y2, thickness, r, g, b, a) => unsafe { draw_line_sys(x1, y1, x2, y2, thickness, r, g, b, a) },
+      Draw::Text(text, font_size, x, y, r, g, b, a) => unsafe { draw_string_sys(CString::new(text.to_owned()).unwrap().as_ptr(), font_size, x, y, r, g, b, a) },
     }
   }
 }
 
-fn init(overlay: &D2dOverlay, options: Option<u32>) {
-  if let Some(process) = &overlay.process {
-    let process_nstr = CString::new(process.to_owned()).unwrap();
-    unsafe { overlay_setup_with_process(draw_loop, process_nstr.as_ptr()); }
+//box
 
-    if let Some(option) = options {
-      unsafe { overlay_options(option); }
-    }
-  }
+pub fn draw_box(x: f32, y: f32, width: f32, height: f32) {
+  let tx = &CHANNEL.0;
+  tx.lock().unwrap().send(Draw::Box(x, y, width, height, THICKNESS, R, G, B, A, FILLED)).unwrap();
 }
 
+pub fn draw_box_with_border(x: f32, y: f32, width: f32, height: f32, thickness: f32, filled: bool) {
+  let tx = &CHANNEL.0;
+  tx.lock().unwrap().send(Draw::Box(x, y, width, height, thickness, R, G, B, A, filled)).unwrap();
+}
 
-impl D2dOverlay {
-  pub fn new_process(process: &str, options: Option<u32>) -> D2dOverlay {
-    let overlay = D2dOverlay {
-      thickness: 1.0,
-      r: 0.0,
-      g: 0.0,
-      b: 0.0,
-      a: 1.0,
-      filled: false,
-      window: None,
-      process: Some(process.to_owned()),
-    };
+pub fn draw_box_with_rbga(x: f32, y: f32, width: f32, height: f32, r: f32, g: f32, b: f32, a: f32) {
+  let tx = &CHANNEL.0;
+  tx.lock().unwrap().send(Draw::Box(x, y, width, height, THICKNESS, r, g, b, a, FILLED)).unwrap();
+}
 
-    init(&overlay, options);
+pub fn draw_box_full(x: f32, y: f32, width: f32, height: f32, thickness: f32, r: f32, g: f32, b: f32, a: f32, filled: bool) {
+  let tx = &CHANNEL.0;
+  tx.lock().unwrap().send(Draw::Box(x, y, width, height, thickness, r, g, b, a, filled)).unwrap();
+}
 
-    overlay
-  }
+//ellipse
 
-  pub fn new_window(pid: u32, options: Option<u32>) -> D2dOverlay {
-    let overlay = D2dOverlay {
-      thickness: 1.0,
-      r: 0.0,
-      g: 0.0,
-      b: 0.0,
-      a: 1.0,
-      filled: false,
-      window: Some(pid),
-      process: None
-    };
+pub fn draw_ellipse(x: f32, y: f32, width: f32, height: f32) {
+  let tx = &CHANNEL.0;
+  tx.lock().unwrap().send(Draw::Ellipse(x, y, width, height, THICKNESS, R, G, B, A, FILLED)).unwrap();
+}
 
-    init(&overlay, options);
+pub fn  draw_ellips_with_border(x: f32, y: f32, width: f32, height: f32, thickness: f32, filled: bool) {
+  let tx = &CHANNEL.0;
+  tx.lock().unwrap().send(Draw::Ellipse(x, y, width, height, thickness, R, G, B, A, filled)).unwrap();
+}
 
-    overlay
-  }
+pub fn draw_ellips_with_rbga(x: f32, y: f32, width: f32, height: f32, r: f32, g: f32, b: f32, a: f32) {
+  let tx = &CHANNEL.0;
+  tx.lock().unwrap().send(Draw::Ellipse(x, y, width, height, THICKNESS, r, g, b, a, FILLED)).unwrap();
+}
 
-  pub fn draw_box(&self, x: f32, y: f32, width: f32, height: f32) {
-    let tx = &CHANNEL.0;
-    tx.lock().unwrap().send((self.clone(), Draw::Box(x, y, width, height))).unwrap();
-  }
+pub fn draw_ellips_full(x: f32, y: f32, width: f32, height: f32, thickness: f32, r: f32, g: f32, b: f32, a: f32, filled: bool) {
+  let tx = &CHANNEL.0;
+  tx.lock().unwrap().send(Draw::Ellipse(x, y, width, height, thickness, r, g, b, a, filled)).unwrap();
+}
 
-  pub fn draw_line(&self, x1: f32, y1: f32, x2: f32, y2: f32) {
-    let tx = &CHANNEL.0;
-    tx.lock().unwrap().send((self.clone(), Draw::Line(x1, y1, x2, y2))).unwrap();
-  }
+//line
 
-  pub fn draw_circle(&self, x: f32, y: f32, radius: f32) {
-    let tx = &CHANNEL.0;
-    tx.lock().unwrap().send((self.clone(), Draw::Circle(x, y, radius))).unwrap();
-  }
+pub fn draw_line(x: f32, y: f32, width: f32, height: f32) {
+  let tx = &CHANNEL.0;
+  tx.lock().unwrap().send(Draw::Line(x, y, width, height, THICKNESS, R, G, B, A)).unwrap();
+}
 
-  pub fn draw_ellipse(&self, x: f32, y: f32, width: f32, height: f32) {
-    let tx = &CHANNEL.0;
-    tx.lock().unwrap().send((self.clone(), Draw::Ellipse(x, y, width, height))).unwrap();
-  }
+pub fn draw_line_with_rbga(x: f32, y: f32, width: f32, height: f32, r: f32, g: f32, b: f32, a: f32) {
+  let tx = &CHANNEL.0;
+  tx.lock().unwrap().send(Draw::Line(x, y, width, height, THICKNESS, r, g, b, a)).unwrap();
+}
 
-  pub fn draw_string(&self, text: &str, font_size: f32, x: f32, y: f32) {
-    let tx = &CHANNEL.0;
-    tx.lock().unwrap().send((self.clone(), Draw::Text(text.to_owned(), font_size, x, y))).unwrap();
+pub fn draw_line_full(x: f32, y: f32, width: f32, height: f32, thickness: f32, r: f32, g: f32, b: f32, a: f32) {
+  let tx = &CHANNEL.0;
+  tx.lock().unwrap().send(Draw::Line(x, y, width, height, thickness, r, g, b, a)).unwrap();
+}
+
+//circle
+
+pub fn draw_circle(x: f32, y: f32, radius: f32) {
+  let tx = &CHANNEL.0;
+  tx.lock().unwrap().send(Draw::Circle(x, y, radius, THICKNESS, R, G, B, A, FILLED)).unwrap();
+}
+
+pub fn draw_circle_with_border(x: f32, y: f32, radius: f32, thickness: f32, filled: bool) {
+  let tx = &CHANNEL.0;
+  tx.lock().unwrap().send(Draw::Circle(x, y, radius, thickness, R, G, B, A, filled)).unwrap();
+}
+
+pub fn draw_circle_with_rbga(x: f32, y: f32, radius: f32, r: f32, g: f32, b: f32, a: f32) {
+  let tx = &CHANNEL.0;
+  tx.lock().unwrap().send(Draw::Circle(x, y, radius, THICKNESS, r, g, b, a, FILLED)).unwrap();
+}
+
+pub fn draw_circle_full(x: f32, y: f32, radius: f32, thickness: f32, r: f32, g: f32, b: f32, a: f32, filled: bool) {
+  let tx = &CHANNEL.0;
+  tx.lock().unwrap().send(Draw::Circle(x, y, radius, thickness, r, g, b, a, filled)).unwrap();
+}
+
+//text
+
+pub fn draw_text(text: &str, font_size: f32, x: f32, y: f32) {
+  let tx = &CHANNEL.0;
+  tx.lock().unwrap().send(Draw::Text(text.to_owned(), font_size, x, y, R, G, B, A)).unwrap();
+}
+
+pub fn draw_text_with_rbga(text: &str, font_size: f32, x: f32, y: f32, r: f32, g: f32, b: f32, a: f32) {
+  let tx = &CHANNEL.0;
+  tx.lock().unwrap().send(Draw::Text(text.to_owned(), font_size, x, y, r, g, b, a)).unwrap();
+}
+
+pub fn overlay_with_process(process: &str, options: Option<u32>) {
+  let process_nstr = CString::new(process.to_owned()).unwrap();
+  unsafe { overlay_setup_with_process_sys(draw_loop, process_nstr.as_ptr()); }
+
+  if let Some(option) = options {
+    unsafe { overlay_options_sys(option); }
   }
 }
