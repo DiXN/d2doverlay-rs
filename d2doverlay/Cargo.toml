@@ -6,3 +6,4 @@ edition = "2018"
 
 [dependencies]
 d2doverlay-sys = { path = "../d2doverlay-sys" }
+lazy_static = "1.4.0"
